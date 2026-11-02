@@ -1,6 +1,6 @@
 # Kubernetes 1.37 Review
 
-This repository contains the example manifests and local lab setup that accompany the YouTube Kubernetes 1.37 review video. The examples focus on selected 1.37 changes and experiments; they are not a complete list of release features.
+This repository contains the example manifests and local lab setup that accompany the YouTube Kubernetes 1.37 review video (https://youtu.be/-8TedKnGUmg). The examples focus on selected 1.37 changes and experiments; they are not a complete list of release features.
 
 ## Lab setup
 

@@ -1,0 +1,120 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-secret
+stringData:
+  database-config: |
+    host: localhost
+    port: 5432
+  api-key: "my-api-key"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: startup-script
+data:
+  script.sh: |
+    #!/bin/sh
+    # Show the current user, group, the the file permission of /mnt/secrets
+    # then sleep infinity
+    id
+    ls -l /mnt/secrets
+    sleep infinity
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: with-user-fields
+spec:
+  securityContext:
+    runAsUser: 10001
+    runAsGroup: 10001
+    fsGroup: 10001
+  containers:
+  - name: application
+    image: busybox
+    command: ["sh", "/mnt/scripts/script.sh"]
+    volumeMounts:
+    - name: secret-volume
+      mountPath: /mnt/secrets
+    - name: startup-script
+      mountPath: /mnt/scripts
+      readOnly: true
+  volumes:
+  - name: startup-script
+    configMap:
+      name: startup-script
+  - name: secret-volume
+    secret:
+      secretName: my-secret
+      # Fallback UID for all files in this volume
+      defaultUser: 10001 
+      items:
+      - key: database-config
+        path: db.conf
+        user: 10002 
+      - key: api-key
+        path: api.key
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: without-user-fields
+spec:
+  securityContext:
+    runAsUser: 10001
+    runAsGroup: 10001
+    fsGroup: 10001
+  containers:
+  - name: application
+    image: busybox
+    command: ["sh", "/mnt/scripts/script.sh"]
+    volumeMounts:
+    - name: secret-volume
+      mountPath: /mnt/secrets
+    - name: startup-script
+      mountPath: /mnt/scripts
+      readOnly: true
+  volumes:
+  - name: secret-volume
+    secret:
+      secretName: my-secret
+      # Fallback UID for all files in this volume
+      items:
+      - key: database-config
+        path: db.conf
+      - key: api-key
+        path: api.key
+  - name: startup-script
+    configMap:
+      name: startup-script
+---
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: without-securitycontext
+spec:
+  containers:
+  - name: application
+    image: busybox
+    command: ["sh", "/mnt/scripts/script.sh"]
+    volumeMounts:
+    - name: secret-volume
+      mountPath: /mnt/secrets
+    - name: startup-script
+      mountPath: /mnt/scripts
+      readOnly: true
+  volumes:
+  - name: secret-volume
+    secret:
+      secretName: my-secret
+      # Fallback UID for all files in this volume
+      items:
+      - key: database-config
+        path: db.conf
+      - key: api-key
+        path: api.key
+  - name: startup-script
+    configMap:
+      name: startup-script
